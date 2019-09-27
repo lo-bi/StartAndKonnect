@@ -34,8 +34,14 @@ end
 aws = Startandkonnect::AWS.new(options[:region])
 res_instance = aws.search_instances(["#{options[:instance]}"])
 if res_instance.reservations.any?
-  puts aws.stop_instance(res_instance.reservations.first.instances.first.instance_id) if options[:stop]
-  puts aws.start_instance(res_instance.reservations.first.instances.first.instance_id) unless options[:stop]
+  if options[:stop]
+    aws.stop_instance(res_instance.reservations.first.instances.first.instance_id)
+    exit
+  else
+    i = aws.start_instance(res_instance.reservations.first.instances.first.instance_id) unless options[:stop]
+    sleep 5
+    Startandkonnect::SSH.new(i.public_dns_name)
+  end
 else
   puts "This instance does not exist"
 end

@@ -36,23 +36,23 @@ module Startandkonnect
       if i.exists?
         case i.state.code
         when 0  # pending
-          r = "#{instance_id} is pending, so it will be running in a bit"
+          puts "#{instance_id} is pending, so it will be running in a bit"
         when 16  # started
-          r = "#{instance_id} is already started"
+          puts "#{instance_id} is already started"
         when 48  # terminated
-          r = "#{instance_id} is terminated, so you cannot start it"
+          puts "#{instance_id} is terminated, so you cannot start it"
         else
           i.start
           while i.state.code != 16
             i = @ec2.instance(instance_id)
             sleep 1
           end
-          r = "#{instance_id} is started"
+          puts "#{instance_id} is started"
         end
       else
-        r = "#{instance_id} does not exist!"
+        puts "#{instance_id} does not exist!"
       end
-      return r
+      return i
     end
 
     def stop_instance(instance_id)
@@ -60,31 +60,31 @@ module Startandkonnect
       if i.exists?
         case i.state.code
         when 48  # terminated
-          r = "#{instance_id} is terminated, so you cannot stop it"
+          puts "#{instance_id} is terminated, so you cannot stop it"
         when 64  # stopping
-          r = "#{instance_id} is stopping, so it will be stopped in a bit"
+          puts "#{instance_id} is stopping, so it will be stopped in a bit"
         when 80  # stopped
-          r = "#{instance_id} is already stopped"
+          puts "#{instance_id} is already stopped"
         else
           i.stop
            while i.state.code != 80
             i = @ec2.instance(instance_id)
             sleep 1
           end
-          r = "#{instance_id} is stopped"
+         puts "#{instance_id} is stopped"
         end
       else
-        r = "#{instance_id} does not exist!"
+        puts "#{instance_id} does not exist!"
       end
-      return r
+      return i
     end
 
   end
 
   class SSH 
 
-    def connect(server)
-      `ssh -i ~/Documents/kali_perso.pem ec2-user@#{server}`
+    def initialize(server)
+      exec("ssh -i ~/Documents/kali_perso.pem ec2-user@#{server}")
     end
   end
 end
