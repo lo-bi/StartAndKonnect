@@ -24,6 +24,7 @@ module Startandkonnect
 
       credentials = Aws.config[:credentials] = Aws::Credentials.new(access_key, secret_key)
       @client = Aws::EC2::Client.new(region: region, credentials: credentials)
+      @ec2 = Aws::EC2::Resource.new(region: region, credentials: credentials)
     end
 
     def search_instances(query)
@@ -31,19 +32,46 @@ module Startandkonnect
     end
 
     def start_instance(instance_id)
-      i = ec2.instance(instance_id)
+      i = @ec2.instance(instance_id)
       if i.exists?
         case i.state.code
         when 0  # pending
-          r = "#{id} is pending, so it will be running in a bit"
+          r = "#{instance_id} is pending, so it will be running in a bit"
         when 16  # started
-          r = "#{id} is already started"
+          r = "#{instance_id} is already started"
         when 48  # terminated
-          r = "#{id} is terminated, so you cannot start it"
+          r = "#{instance_id} is terminated, so you cannot start it"
         else
           i.start
-          puts i.inspect
-          r = "#{id} is starting"
+          while i.state.code != 16
+            i = @ec2.instance(instance_id)
+            sleep 1
+          end
+          r = "#{instance_id} is started"
+        end
+      else
+        r = "#{instance_id} does not exist!"
+      end
+      return r
+    end
+
+    def stop_instance(instance_id)
+      i = @ec2.instance(instance_id)
+      if i.exists?
+        case i.state.code
+        when 48  # terminated
+          r = "#{instance_id} is terminated, so you cannot stop it"
+        when 64  # stopping
+          r = "#{instance_id} is stopping, so it will be stopped in a bit"
+        when 80  # stopped
+          r = "#{instance_id} is already stopped"
+        else
+          i.stop
+           while i.state.code != 80
+            i = @ec2.instance(instance_id)
+            sleep 1
+          end
+          r = "#{instance_id} is stopped"
         end
       else
         r = "#{instance_id} does not exist!"

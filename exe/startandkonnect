@@ -4,7 +4,8 @@ require 'optparse'
 
 options = {
     :region => nil,
-    :instance => []
+    :instance => [],
+    :stop => false
 }
 
 op = OptionParser.new do |parser|
@@ -17,6 +18,10 @@ op = OptionParser.new do |parser|
     options[:instance] = instance
   end
 
+  parser.on("-s", "--stop", "Action to perform") do |stop|
+    options[:stop] = true
+  end
+
 end
 op.parse(ARGV)
 
@@ -26,6 +31,11 @@ unless options[:region] && options[:instance]
   exit 1
 end
 
-aws_client = Startandkonnect::AWS.new(options[:region])
-res_instance = aws_client.search_instances(["#{options[:instance]}"])
-puts aws_client.start_instance(res_instance.reservations.first.instances.first.instance_id)
+aws = Startandkonnect::AWS.new(options[:region])
+res_instance = aws.search_instances(["#{options[:instance]}"])
+if res_instance.reservations.any?
+  puts aws.stop_instance(res_instance.reservations.first.instances.first.instance_id) if options[:stop]
+  puts aws.start_instance(res_instance.reservations.first.instances.first.instance_id) unless options[:stop]
+else
+  puts "This instance does not exist"
+end
