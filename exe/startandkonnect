@@ -1,6 +1,31 @@
 #!/usr/bin/env ruby
-require '../lib/startandkonnect.rb'
+require 'startandkonnect'
+require 'optparse'
 
-region = 'eu-west-1'
+options = {
+    :region => nil,
+    :instance => []
+}
 
-aws_client = Startandkonnect::AWS.new(region)
+op = OptionParser.new do |parser|
+
+  parser.on("-r", "--region REGION", "[REQUIRED] Name of AWS Region") do |region|
+    options[:region] = region
+  end
+
+  parser.on("-i", "--instance INSTANCE NAME", "[REQUIRED] EC2 Instance name") do |instance|
+    options[:instance] = instance
+  end
+
+end
+op.parse(ARGV)
+
+unless options[:region] && options[:instance]
+  puts "Required parameters missing"
+  puts op
+  exit 1
+end
+
+aws_client = Startandkonnect::AWS.new(options[:region])
+res_instance = aws_client.search_instances(["#{options[:instance]}"])
+puts aws_client.start_instance(res_instance.reservations.first.instances.first.instance_id)
